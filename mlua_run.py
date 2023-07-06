@@ -25,7 +25,7 @@ import random
 from PIL import Image
 from torch.utils.data.sampler import Sampler
 import itertools
-from util.utils import mean_metric, DiceLoss, mse_loss, sigmoid_rampup, get_current_consistency_weight, sigmoid_mse_loss
+from util.utils import mean_metric, DiceLoss, mse_loss, sigmoid_rampup, get_current_consistency_weight, sigmoid_mse_loss, heatmapper, img_heatmapper
 from evaluate.utils import recompone_overlap, metric_calculate
 from dataset import TrainDataset, ValDataset
 from dataloader import TwoStreamBatchSampler
@@ -55,7 +55,7 @@ class CariesSSLNet(LightningModule):
         # networks
         self.model_tea = Net()
         self.model_stu = Net()
-        for para in self.model_stu.parameters():
+        for para in self.model_tea.parameters():
             para.detach_()
 
         self.dice_loss = DiceLoss()
@@ -65,43 +65,33 @@ class CariesSSLNet(LightningModule):
 
         self.eval_dict = dict({"acc": [], "iou": [], "dice": [], "pre": [], "spe": [], "sen": []})
 
-        """
-        ablation study flag
-        False, False, False = Unet
-        True, False, False = UAMT-noise
-        False, True, False = UAMT-EAM
-        False, False, True = Deep Supervision
-        True, True, False = UAMT
-        True, False, True = MLUA - noise
-        False, True, True = MLUA - EAM
-        True, True, True = MLUA
-        """
         self.ema_p = True
         self.noise_p = True
         self.ml_p = True
 
     def forward(self, l_x):
-        return self.model_tea(l_x)[0]
-
+        preds = self.model_stu(l_x)
+        return preds[0]
+   
     def training_step(self, batch, batch_idx):
         self.glob_step += 1
         imgs, gts = batch
-        pred, pred_list = self.model_tea(imgs)
+        pred, pred_list = self.model_stu(imgs)
         consistency_loss = 0
         if self.semi_train:
             ul_data = imgs[self.l_batch_size:]
-            noise = torch.clamp(torch.randn_like(ul_data) * 0.05, -0.1, 0.1)
+            noise = torch.clamp(torch.randn_like(ul_data) * 0.01, -0.1, 0.1)
             volume_batch_r = ul_data + noise
             with torch.no_grad():
-                ul_pred = self.model_stu(ul_data)[0]
+                ul_pred = self.model_tea(volume_batch_r)[0]
             T = 8
             (_, c, h, w) = gts.shape
             stride = volume_batch_r.shape[0]
             preds = torch.zeros([T * 5 * stride, c, h, w]).cuda()
             for i in range(T):
-                ema_inputs = volume_batch_r + torch.clamp(torch.randn_like(volume_batch_r) * 0.05, -0.1, 0.1)
+                ema_inputs = ul_data + torch.clamp(torch.randn_like(volume_batch_r) * 0.01, -0.1, 0.1)
                 with torch.no_grad():
-                    final_pred, pyramid_pred_list = self.model_stu(ema_inputs)
+                    final_pred, pyramid_pred_list = self.model_tea(ema_inputs)
                     preds[20 * i :20 * i + 4] = final_pred
                     pyramid_pred = torch.cat(pyramid_pred_list, dim=0)
                     preds[20 * i + 4:20 * i + 20] = pyramid_pred
@@ -122,7 +112,7 @@ class CariesSSLNet(LightningModule):
         bce_loss = 0
         dice_loss = 0
         for pred_aux in pred_list:
-            bce_loss +=self.bce_loss(pred_aux[:self.l_batch_size], gts[:self.l_batch_size])
+            bce_loss += self.bce_loss(pred_aux[:self.l_batch_size], gts[:self.l_batch_size])
             dice_loss += self.dice_loss(pred_aux[:self.l_batch_size], gts[:self.l_batch_size])
         bce_loss += self.bce_loss(pred[:self.l_batch_size], gts[:self.l_batch_size])
         dice_loss += self.dice_loss(pred[:self.l_batch_size], gts[:self.l_batch_size])
@@ -187,9 +177,8 @@ class CariesSSLNet(LightningModule):
 
     def on_train_batch_end(self, outputs, batch, batch_idx, unused: int = 0):
         alpha = min(1 - 1 / (self.current_epoch + 1), self.p)
-        for para1, para2 in zip(self.model_stu.parameters(), self.model_tea.parameters()):
-            para1 = alpha * para1 + (1 - alpha) * para2  
-
+        for para1, para2 in zip(self.model_tea.parameters(), self.model_stu.parameters()):
+            para1.data = alpha * para1.data + (1 - alpha) * para2.data  
 
 def seed_everything(seed=42):
     random.seed(seed)
@@ -226,7 +215,7 @@ def main():
     learning_rate = 1e-3
     theta = 0.99
     labeled_ratio = {"0.1": 265, "0.2": 530, "0.5": 1325}
-    labeled_rate = "0.2"
+    labeled_rate = "0.1"
     if SSL_flag:
         batch_size, l_batch_size = 8, 4
     else:
