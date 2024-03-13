@@ -14,7 +14,6 @@ Cite
 ---
 If you using this dataset, please cite our paper:
 ```markdown
-```
 @article{wang2023multi,
   title={Multi-level uncertainty aware learning for semi-supervised dental panoramic caries segmentation},
   author={Wang, Xianyun and Gao, Sizhe and Jiang, Kaisheng and Zhang, Huicong and Wang, Linhong and Chen, Feng and Yu, Jun and Yang, Fan},
@@ -24,5 +23,4 @@ If you using this dataset, please cite our paper:
   year={2023},
   publisher={Elsevier}
 }
-```
 ```
