@@ -9,3 +9,20 @@ DC1000 Dataset Download
 Google Drive source: https://drive.google.com/file/d/1Xn1oGHvhGF9GbkcLEtCOV5QvWWqt1y62/view?usp=drive_link
 
 Baidu Cloud source: https://pan.baidu.com/s/1jRXsSQIr8mm3EyGYELv9kg?pwd=rsoc
+
+Cite
+---
+If you using this dataset, please cite our paper:
+```markdown
+```
+@article{wang2023multi,
+  title={Multi-level uncertainty aware learning for semi-supervised dental panoramic caries segmentation},
+  author={Wang, Xianyun and Gao, Sizhe and Jiang, Kaisheng and Zhang, Huicong and Wang, Linhong and Chen, Feng and Yu, Jun and Yang, Fan},
+  journal={Neurocomputing},
+  volume={540},
+  pages={126208},
+  year={2023},
+  publisher={Elsevier}
+}
+```
+```
