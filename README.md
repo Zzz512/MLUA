@@ -10,6 +10,10 @@ Google Drive source: https://drive.google.com/file/d/1Xn1oGHvhGF9GbkcLEtCOV5QvWW
 
 Baidu Cloud source: https://pan.baidu.com/s/1jRXsSQIr8mm3EyGYELv9kg?pwd=rsoc
 
+Further Work
+---
+If you are interested in the task of segmenting caries in panoramic images, we believe our new work on structured segmentation of dental tissues and classification of caries will capture your interest.
+
 Cite
 ---
 If you using this dataset, please cite our paper:
