@@ -12,7 +12,8 @@ Baidu Cloud source: https://pan.baidu.com/s/1jRXsSQIr8mm3EyGYELv9kg?pwd=rsoc
 
 Further Work
 ---
-If you are interested in the task of segmenting caries in panoramic images, we believe our new work on structured segmentation of dental tissues and classification of caries will capture your interest.
+If you are interested in the task of segmenting caries in panoramic images, we believe our new work on structured segmentation of dental tissues and classification of caries will capture your interest：
+https://github.com/Zzz512/TSD
 
 Cite
 ---
